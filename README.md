@@ -63,7 +63,7 @@ The page also says how long this start took, and the last one without anything k
 * Made and measured on one Mac (Apple silicon, the game under Rosetta, OpenGL), on 2026-10-08. It is
   plain C# with nothing of the Mac's in it, but it has **not been run** on Windows or Linux.
 
-More: [how it works, what was measured and what was tried](docs/How-it-works.md).
+More: [how it works, what was measured and what was tried](https://github.com/IshiakiZ/ksp-warm-start/wiki/How-it-works).
 
 ## Licence
 
