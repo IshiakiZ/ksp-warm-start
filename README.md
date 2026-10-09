@@ -64,3 +64,7 @@ The page also says how long this start took, and the last one without anything k
   plain C# with nothing of the Mac's in it, but it has **not been run** on Windows or Linux.
 
 More: [how it works, what was measured and what was tried](docs/How-it-works.md).
+
+## Licence
+
+[MIT](LICENSE).
