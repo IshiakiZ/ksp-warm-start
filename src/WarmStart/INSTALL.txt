@@ -1,0 +1,34 @@
+Warm Start @VERSION@
+for Kerbal Space Program 1.12.x
+
+The game starts in less than half the time, because what it works out afresh at every start
+is kept from the last one: the expansions' big files unpacked, the PNG pictures made into
+textures, and what the game reads out of its small bundles.
+
+INSTALL
+  Copy both folders in this download's GameData (Keystone and WarmStart) into your KSP's
+  GameData folder, and start the game. Keystone is the base this mod stands on; one copy
+  serves every mod that uses it. To remove the mod, delete the WarmStart folder: what it has
+  kept goes with it.
+
+THE FIRST START
+  The first start is as slow as ever, and at its main menu a minute of work goes on in the
+  background (a line at the foot of the screen says so). From the second start on it is fast.
+
+WHAT IT COSTS
+  About a gigabyte of disk, in GameData/WarmStart/PluginData. No memory: the game uses less
+  with it than without.
+
+USE
+  There is nothing to do. Its settings, and how long the last starts took, are in the
+  Keystone window: the keystone button on the game's toolbar, or Option-K on a Mac and Alt-K
+  elsewhere. Then turn to Warm Start.
+
+WITH KSP COMMUNITY FIXES
+  That mod loads the game its own, faster way. Where it is installed Warm Start does nothing:
+  use one or the other.
+
+WHERE IT WORKS
+  Made and measured on a Mac. Nobody has run it on Windows or Linux yet.
+
+Everything else: https://github.com/IshiakiZ/ksp-warm-start
