@@ -6,7 +6,7 @@ is kept from the last one: the expansions' big files unpacked, the PNG pictures 
 textures, and what the game reads out of its small bundles.
 
 INSTALL
-  Copy both folders in this download's GameData (Keystone and WarmStart) into your KSP's
+  Copy both folders in this download (Keystone and WarmStart) into your KSP's
   GameData folder, and start the game. Keystone is the base this mod stands on; one copy
   serves every mod that uses it. To remove the mod, delete the WarmStart folder: what it has
   kept goes with it.

@@ -23,7 +23,7 @@ checked texture by texture and description by description.
 
 ## Install
 
-Copy the `Keystone` and `WarmStart` folders from the download's `GameData` into your KSP `GameData`.
+Copy the `Keystone` and `WarmStart` folders from the download into your KSP `GameData`.
 
 The first start after that is as slow as ever, and at its main menu a minute of work goes on in the
 background (a line at the foot of the screen says so). From the second start on it is fast.
