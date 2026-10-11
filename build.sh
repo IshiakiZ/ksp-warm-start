@@ -20,6 +20,19 @@ for candidate in ../ksp-keystone/GameData/Keystone/Keystone.dll "$KSP_DIR/GameDa
   [ -z "$KEYSTONE" ] && [ -f "$candidate" ] && KEYSTONE="$candidate"
 done
 [ -n "$KEYSTONE" ] && [ -f "$KEYSTONE" ] || { echo "error: Keystone.dll not found: install Keystone into the game, build ../ksp-keystone, or set KEYSTONE=/path/to/Keystone.dll" >&2; exit 1; }
+# What else it is built against, if anything (src/WarmStart/needs.txt: other mods' libraries, by their place in GameData):
+# a built copy of that mod's repository beside this one, or the copy installed in the game.
+if [ -f src/WarmStart/needs.txt ]; then
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    found=""
+    for candidate in ../*/GameData/"$path" "$KSP_DIR/GameData/$path"; do
+      [ -z "$found" ] && [ -f "$candidate" ] && found="$candidate"
+    done
+    [ -n "$found" ] || { echo "error: $path not found: install that mod into the game, or build its repository beside this one" >&2; exit 1; }
+    KEYSTONE="$KEYSTONE:$found"
+  done < src/WarmStart/needs.txt
+fi
 
 case "$MODE" in
   check)
@@ -31,10 +44,12 @@ case "$MODE" in
     WITH="$KEYSTONE" compile "$OUT/WarmStart.dll" "" src/WarmStart
     # (the mod's own shaders, if it has any: made by tools/shaderpack/make_bundle.py and kept ready made in src/WarmStart/Shaders)
     if ls src/WarmStart/Shaders/*.bundle >/dev/null 2>&1; then mkdir -p "$OUT/PluginData"; cp src/WarmStart/Shaders/*.bundle "$OUT/PluginData/"; fi
+    # (and anything else it keeps in src/WarmStart/PluginData: a craft file, say)
+    if [ -d src/WarmStart/PluginData ]; then mkdir -p "$OUT/PluginData"; cp -R src/WarmStart/PluginData/. "$OUT/PluginData/"; fi
     if [ "$MODE" = dist ]; then echo "ok: built into $OUT"; exit 0; fi
     mkdir -p "$KSP_DIR/GameData/WarmStart"
     cp "$OUT/WarmStart.dll" "$KSP_DIR/GameData/WarmStart/"
-    if [ -d "$OUT/PluginData" ]; then mkdir -p "$KSP_DIR/GameData/WarmStart/PluginData"; cp "$OUT/PluginData"/*.bundle "$KSP_DIR/GameData/WarmStart/PluginData/"; fi
+    if [ -d "$OUT/PluginData" ]; then mkdir -p "$KSP_DIR/GameData/WarmStart/PluginData"; cp -R "$OUT/PluginData/." "$KSP_DIR/GameData/WarmStart/PluginData/"; fi
     echo "ok: Warm Start installed to $KSP_DIR/GameData/WarmStart (restart KSP to load it; it needs Keystone there too)"
     ;;
   *)

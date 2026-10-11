@@ -57,11 +57,17 @@ The page also says how long this start took, and the last one without anything k
 * When a file changes (a mod updated, added or taken out), only what was kept of that file is made
   again, in the start that follows.
 * It does not make everything faster. The game's own start before any mod runs, its parts, and its
-  planets and space centre take 17 of the 21 seconds that are left here, and are left alone.
+  planets and space centre take 17 of the 21 seconds that are left on the Mac, and are left alone.
 * With **KSP Community Fixes** installed, which loads the game its own, faster way, Warm Start does
   nothing: use one or the other.
-* Made and measured on one Mac (Apple silicon, the game under Rosetta, OpenGL), on 2026-10-08. It is
-  plain C# with nothing of the Mac's in it, but it has **not been run** on Windows or Linux.
+
+## Where it works
+
+| System | |
+| --- | --- |
+| Mac | Made and measured here (Apple silicon, the game under Rosetta, OpenGL, 2026-10-08): 55 s to the main menu as the game ships, 21 s with it. |
+| Windows | Tried on Windows 11 (KSP 1.12.5, Direct3D 11, 2026-10-09), the game on an SSD: 47 s to the main menu with it switched off, 17 to 18.5 s with it; 18.3 s with the game started on OpenGL (`-force-glcore`). |
+| Linux | **Never run.** It is plain C# with nothing of one system's in it. |
 
 More: [how it works, what was measured and what was tried](https://github.com/IshiakiZ/ksp-warm-start/wiki/How-it-works).
 
