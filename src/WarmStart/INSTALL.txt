@@ -29,6 +29,7 @@ WITH KSP COMMUNITY FIXES
   use one or the other.
 
 WHERE IT WORKS
-  Made and measured on a Mac. Nobody has run it on Windows or Linux yet.
+  Made and measured on a Mac, and tried on Windows 11 (47 s to the main menu without it
+  there, 17 to 18.5 s with it). Nobody has run it on Linux yet.
 
 Everything else: https://github.com/IshiakiZ/ksp-warm-start
