@@ -3,6 +3,8 @@
 Kerbal Space Program starts in less than half the time, because what it works out afresh at every start
 is kept from the last one.
 
+![From starting the game to its main menu: 55 seconds as the game ships, 21 with Warm Start (measured)](src/WarmStart/img/warm-start.gif)
+
 ![Where the seconds of a start go, as the game ships and with Warm Start](src/WarmStart/img/warm-start.svg)
 
 For Kerbal Space Program 1.12.x. Needs [Keystone](https://github.com/IshiakiZ/ksp-keystone), which comes in the download.
@@ -73,4 +75,4 @@ More: [how it works, what was measured and what was tried](https://github.com/Is
 
 ## Licence
 
-[MIT](LICENSE).
+[CC BY 4.0](LICENSE): use it, change it and pass it on as you like, as long as you credit Ishiaki and link back here.
