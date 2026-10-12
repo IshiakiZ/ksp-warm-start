@@ -40,7 +40,7 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.1.1";
+        public const string Version = "0.2.0";
 
         public static Mod Page;
         public static Toggle On, Expansions, Fades, Frames, Pictures, Small;
@@ -131,6 +131,8 @@ namespace WarmStart
             Warm.Page.Panel = Panel;
             // (where another mod has taken the game's loading over, this one does nothing at all: two at the same job would only be in each other's way)
             others = Warm.OthersDo;
+            // (where the start goes, mod by mod: listened for whoever loads the game)
+            if (Warm.On) Where.Begin();
             if (others) Warm.Log("KSP Community Fixes is installed, and loads the game its own way: Warm Start leaves everything to it");
             if (Warm.On && !others)
             {
@@ -158,6 +160,7 @@ namespace WarmStart
         void Update()
         {
             // (the textures: handed over once the game has listed its files, and what it made of the rest taken down once it is through them)
+            if (pictures || small) Where.Aside();
             if (pictures)
             {
                 try { Textures.Step(); pictures = Textures.Busy; }
@@ -205,6 +208,7 @@ namespace WarmStart
         {
             if (scene != GameScenes.MAINMENU || menuAt >= 0f) return;
             menuAt = Time.realtimeSinceStartup;
+            Where.End();
             // How long this start took, from the game being started to the main menu being there, kept beside how long the last
             // start with nothing handed over took: so that the page can say what the mod is worth here.
             string took = menuAt.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
@@ -232,11 +236,16 @@ namespace WarmStart
         void Panel()
         {
             string cold = Warm.Page.Kept("cold"), took = Warm.Page.Kept("took");
-            if (others) { GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves everything to it.", Host.Small); return; }
+            if (others)
+            {
+                GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves everything to it."
+                                + (menuAt >= 0f ? " This start took " + menuAt.ToString("F1") + " seconds to the main menu." : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : ""), Host.Small);
+                return;
+            }
             said = (menuAt >= 0f ? "This start took " + menuAt.ToString("F1") + " seconds to the main menu" + (warm ? "." : partly ? ", with some of what can be kept not kept yet." : ", with nothing kept to hand over.") : "Still starting.")
                  + (!string.IsNullOrEmpty(cold) && (warm || partly) ? " The last start with nothing handed over took " + cold + "." : "")
                  + (!string.IsNullOrEmpty(took) && !warm ? " The last with everything handed over took " + took + "." : "")
-                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (making.Length > 0 ? "\n" + making : "");
+                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
             GUILayout.Label(said, Host.Small);
         }
 

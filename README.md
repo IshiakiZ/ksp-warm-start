@@ -52,7 +52,9 @@ Each part can be switched off by itself; what is kept stays on the disk.
 | Do not wait on the loading screen | on | the loader does not slow down while one loading picture fades into the next |
 | Load at any frame rate | on | the game's frame-rate limit is lifted until the main menu is there |
 
-The page also says how long this start took, and the last one without anything kept.
+The page also says how long this start took, and the last one without anything kept. And (from 0.2.0) where the
+start went, mod by mod: which mods' parts, models, pictures and sounds the seconds were spent on, so that with
+hundreds of mods one can see which are worth their wait.
 
 ## Good to know
 
