@@ -7,7 +7,7 @@ is kept from the last one.
 
 ![Where the seconds of a start go, as the game ships and with Warm Start](src/WarmStart/img/warm-start.svg)
 
-For Kerbal Space Program 1.12.x. Needs [Keystone](https://github.com/IshiakiZ/ksp-keystone), which comes in the download.
+For Kerbal Space Program 1.12.x. Needs [Keystone](https://github.com/IshiakiZ/ksp-keystone), a separate download ([its page on SpaceDock](https://spacedock.info/mod/4665/Keystone)): this mod does not load without it.
 
 Three things take most of a start, and each comes out the same every time:
 
@@ -25,7 +25,8 @@ checked texture by texture and description by description.
 
 ## Install
 
-Copy the `Keystone` and `WarmStart` folders from the download into your KSP `GameData`.
+Install [Keystone](https://github.com/IshiakiZ/ksp-keystone) first: it is a download of its own, and its `Keystone` folder goes into your KSP
+`GameData`. Then copy the `WarmStart` folder from this mod's download into `GameData` beside it.
 
 The first start after that is as slow as ever, and at its main menu a minute of work goes on in the
 background (a line at the foot of the screen says so). From the second start on it is fast.
