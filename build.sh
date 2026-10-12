@@ -34,14 +34,25 @@ if [ -f src/WarmStart/needs.txt ]; then
   done < src/WarmStart/needs.txt
 fi
 
+# A companion library for the Harmony mod, where this mod has one (src/WarmStartHarmony): built against this mod and against
+# Harmony, only where Harmony is installed in the game, and loaded by the game only where it is.
+HARMONY="$KSP_DIR/GameData/000_Harmony/0Harmony.dll"
+companion() {  # companion <folder the mod's own library is in>
+  [ -d src/WarmStartHarmony ] || return 0
+  if [ -f "$HARMONY" ]; then WITH="$KEYSTONE:$1/WarmStart.dll:$HARMONY" compile "$1/WarmStartHarmony.dll" "" src/WarmStartHarmony
+  else rm -f "$1/WarmStartHarmony.dll"; echo "left out: WarmStartHarmony (Harmony is not installed here to build it against)"; fi
+}
+
 case "$MODE" in
   check)
     WITH="$KEYSTONE" compile "$TMP/WarmStart.dll" "" src/WarmStart
+    companion "$TMP"
     echo "ok: compiles"
     ;;
   dist|install)
     mkdir -p "$OUT"
     WITH="$KEYSTONE" compile "$OUT/WarmStart.dll" "" src/WarmStart
+    companion "$OUT"
     # (the mod's own shaders, if it has any: made by tools/shaderpack/make_bundle.py and kept ready made in src/WarmStart/Shaders)
     if ls src/WarmStart/Shaders/*.bundle >/dev/null 2>&1; then mkdir -p "$OUT/PluginData"; cp src/WarmStart/Shaders/*.bundle "$OUT/PluginData/"; fi
     # (and anything else it keeps in src/WarmStart/PluginData: a craft file, say)
@@ -49,6 +60,8 @@ case "$MODE" in
     if [ "$MODE" = dist ]; then echo "ok: built into $OUT"; exit 0; fi
     mkdir -p "$KSP_DIR/GameData/WarmStart"
     cp "$OUT/WarmStart.dll" "$KSP_DIR/GameData/WarmStart/"
+    rm -f "$KSP_DIR/GameData/WarmStart/WarmStartHarmony.dll"
+    [ -f "$OUT/WarmStartHarmony.dll" ] && cp "$OUT/WarmStartHarmony.dll" "$KSP_DIR/GameData/WarmStart/"
     if [ -d "$OUT/PluginData" ]; then mkdir -p "$KSP_DIR/GameData/WarmStart/PluginData"; cp -R "$OUT/PluginData/." "$KSP_DIR/GameData/WarmStart/PluginData/"; fi
     echo "ok: Warm Start installed to $KSP_DIR/GameData/WarmStart (restart KSP to load it; it needs Keystone there too)"
     ;;

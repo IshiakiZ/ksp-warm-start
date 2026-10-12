@@ -3,7 +3,8 @@ for Kerbal Space Program 1.12.x
 
 The game starts in less than half the time, because what it works out afresh at every start
 is kept from the last one: the expansions' big files unpacked, the PNG pictures made into
-textures, and what the game reads out of its small bundles.
+textures, what the game reads out of its small bundles, and (from 0.3.0) the parts' drag
+cubes, which ModuleManager makes the game work out again after every change to the mods.
 
 INSTALL
   This mod needs Keystone, the base it stands on, which is a separate download:
@@ -26,12 +27,21 @@ USE
   Keystone window: the keystone button on the game's toolbar, or Option-K on a Mac and Alt-K
   elsewhere. Then turn to Warm Start.
 
+WITH THE HARMONY MOD (not needed)
+  Where the Harmony mod (HarmonyKSP) is installed, the game's look-ups of models, pictures,
+  sounds and parts' records go by a table instead of a walk through every one: about a tenth
+  off a start with thousands of parts, nothing that shows with the game alone. It is the one
+  part of this mod that changes the game's code; it checks itself against the game's own
+  look-ups and puts itself away at the first difference; and it has a switch. Without Harmony
+  none of the game's code is changed.
+
 WITH KSP COMMUNITY FIXES
   That mod loads the game its own, faster way. Where it is installed Warm Start does nothing:
   use one or the other.
 
 WHERE IT WORKS
   Made and measured on a Mac, and tried on Windows 11 (47 s to the main menu without it
-  there, 17 to 18.5 s with it). Nobody has run it on Linux yet.
+  there, 17 to 18.5 s with it). What 0.3.0 adds (the drag cubes kept, the look-ups by table)
+  has been run on the Mac only so far. Nobody has run it on Linux yet.
 
 Everything else: https://github.com/IshiakiZ/ksp-warm-start

@@ -28,7 +28,11 @@ namespace WarmStart
     /// Each is kept, or done ahead, by a file of its own here, and can be switched off by itself. With all of
     /// them the same start takes 21 seconds.
     ///
-    /// None of the game's code is changed. Each of them hands the game something through a door the game
+    /// (From 0.3.0 there are two more: the parts' drag cubes kept across the times ModuleManager throws the game's
+    /// record of them away (Cubes), and, where the Harmony mod is installed, the game's look-ups done by a table
+    /// (the companion library, src/WarmStartHarmony: the one part that changes the game's code).)
+    ///
+    /// None of the game's code is changed here. Each of them hands the game something through a door the game
     /// already has: a list it looks at before it loads a thing, a field it reads, a line it writes in its
     /// log. And what the game ends up with was compared with what it makes by itself: every texture's size,
     /// kind and pixels, every description, their order (see the wiki's How-it-works).
@@ -40,10 +44,10 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         public static Mod Page;
-        public static Toggle On, Expansions, Fades, Frames, Pictures, Small;
+        public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables;
 
         /// <summary>
         /// Where the game keeps the date of a file on its list. The game passes over a file whose texture it has
@@ -73,6 +77,9 @@ namespace WarmStart
             Pictures = Page.Toggle("pictures", "Textures, ready made", true, "What the game makes of each PNG picture (unpacking it, squeezing it into the graphics card's own format, making its smaller copies) is kept from the first start, and handed back at every later one; and the DDS pictures, which are finished already, are read by several threads ahead of the game. A few hundred megabytes of disk. A picture whose file changes is made again.");
             Small = Page.Toggle("small", "What is in the small bundles, kept", true, "The game opens every one of its couple of hundred small bundles (the pages of its manual, mostly) at every start, only to read a short description of what is in each: and opening one means unpacking all of it. With this the descriptions are kept from one start to the next, and while no bundle has changed none is opened. Next to no disk.");
             Expansions = Page.Toggle("expansions", "The expansions' files, unpacked", true, "Making History and Breaking Ground keep their models and scenes in three files that the game has to unpack whole, into memory, at every start: about a third of the whole wait. With this, a copy of each is kept that needs no unpacking, and the game is handed that. It takes about a gigabyte of disk, is made once (in the background, at the main menu, the first time), and is made again by itself if the expansion's own file ever changes.");
+            DragCubes = Page.Toggle("cubes", "The parts' drag cubes, kept", true, "ModuleManager throws the game's record of every part's drag cubes away whenever a mod is added, updated or taken out, and the start that follows makes them all again: half a minute for a thousand parts. With this on, the cubes of every part that is exactly what it was (its description after every patch, its models, the libraries its modules come from) are handed back to the game, and only the parts that changed are made again. A few are left to the game each time and compared with what was kept: if one ever differs, everything kept is thrown away.");
+            Page.Heading("With the Harmony mod");
+            Tables = Page.Toggle("tables", "Look-ups by table", true, "The game finds a model, a picture, a sound or a part's record by going through the whole list of them: with thousands of parts and models that is most of a minute at every start. With this on, and the Harmony mod (HarmonyKSP) installed, each is found by name in a table. This is the one part of Warm Start that puts code of its own in place of the game's: one look-up in 256 is checked against the game's own, and at the first difference the tables are put away for the session. Changing this takes effect at the next start.");
         }
 
         public static void Log(string text) => Kit.Log("Warm Start", text);
@@ -106,6 +113,27 @@ namespace WarmStart
                 return false;
             }
         }
+    }
+
+    /// <summary>
+    /// What Warm Start's companion library asks of it and gives it. (WarmStartHarmony: the look-ups by table. The game loads
+    /// that library only where the Harmony mod is installed; this one never needs Harmony.)
+    /// </summary>
+    public static class Companion
+    {
+        /// <summary>What the companion has to say for the mod's page, once it has put its look-ups in.</summary>
+        public static Func<string> TablesReport;
+
+        /// <summary>Whether the look-ups by table are wanted: the mod on, their switch on, and no other mod loading the game its own way.</summary>
+        public static bool WantsTables
+        {
+            get { Warm.Setup(); return Warm.On && Warm.Tables && !Warm.OthersDo; }
+        }
+
+        /// <summary>A word kept by hand in the mod's settings file ("tablecheck = all": every look-up checked, for trying it out).</summary>
+        public static string Kept(string key) { Warm.Setup(); return Warm.Page.Kept(key); }
+
+        public static void Log(string text) => Warm.Log(text);
     }
 
     /// <summary>
@@ -143,6 +171,11 @@ namespace WarmStart
                 }
                 if (Warm.Pictures) { Textures.Begin(); pictures = true; }
                 if (Warm.Small) { Definitions.Begin(); small = true; }
+                if (Warm.DragCubes)
+                {
+                    try { Cubes.Begin(); }
+                    catch (Exception ex) { Warm.Log("could not see to the parts' drag cubes (" + ex.Message + ")"); }
+                }
             }
             GameEvents.onLevelWasLoadedGUIReady.Add(Arrived);
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += Scene;
@@ -161,6 +194,7 @@ namespace WarmStart
         {
             // (the textures: handed over once the game has listed its files, and what it made of the rest taken down once it is through them)
             if (pictures || small) Where.Aside();
+            if (menuAt < 0f) Cubes.Place();
             if (pictures)
             {
                 try { Textures.Step(); pictures = Textures.Busy; }
@@ -206,6 +240,8 @@ namespace WarmStart
 
         void Arrived(GameScenes scene)
         {
+            // (the look-ups by table, where they are in: said in the log at the main menu, and at every scene while they are being tried out)
+            if (Companion.TablesReport != null && (scene == GameScenes.MAINMENU ? menuAt < 0f : Warm.Page.Kept("tablecheck") == "all")) Warm.Log(Companion.TablesReport());
             if (scene != GameScenes.MAINMENU || menuAt >= 0f) return;
             menuAt = Time.realtimeSinceStartup;
             Where.End();
@@ -230,6 +266,11 @@ namespace WarmStart
                 try { Textures.Tell(Warm.Folder + list); Definitions.Tell(Warm.Folder + "defs_" + list); }
                 catch (Exception ex) { Warm.Log("could not write the lists for comparing (" + ex.Message + ")"); }
             }
+            if (Warm.On && Warm.DragCubes && !others)
+            {
+                try { Cubes.Keep(); }
+                catch (Exception ex) { Warm.Log("could not keep the parts' drag cubes (" + ex.Message + ")"); }
+            }
             if (Warm.On && Warm.Expansions && !others) StartCoroutine(Bundles.Make(text => making = text));
         }
 
@@ -245,7 +286,7 @@ namespace WarmStart
             said = (menuAt >= 0f ? "This start took " + menuAt.ToString("F1") + " seconds to the main menu" + (warm ? "." : partly ? ", with some of what can be kept not kept yet." : ", with nothing kept to hand over.") : "Still starting.")
                  + (!string.IsNullOrEmpty(cold) && (warm || partly) ? " The last start with nothing handed over took " + cold + "." : "")
                  + (!string.IsNullOrEmpty(took) && !warm ? " The last with everything handed over took " + took + "." : "")
-                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
+                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Warm.Tables ? "\n" + (Companion.TablesReport != null ? Companion.TablesReport() : "Look-ups by table need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
             GUILayout.Label(said, Host.Small);
         }
 
