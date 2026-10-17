@@ -30,10 +30,12 @@ USE
 WITH THE HARMONY MOD (not needed)
   Where the Harmony mod (HarmonyKSP) is installed, the game's look-ups of models, pictures,
   sounds and parts' records go by a table instead of a walk through every one: about a tenth
-  off a start with thousands of parts, nothing that shows with the game alone. It is the one
-  part of this mod that changes the game's code; it checks itself against the game's own
-  look-ups and puts itself away at the first difference; and it has a switch. Without Harmony
-  none of the game's code is changed.
+  off a start with thousands of parts, nothing that shows with the game alone. And (from
+  0.4.0) each part's icon is made without copying and waking all that the game throws away:
+  0.71 s of icons came down to 0.44 s with the game's own 474 parts, more with more parts.
+  These are the only parts of this mod that change the game's code; each checks itself
+  against the game's own way and stands aside where they differ; each has a switch. Without
+  Harmony none of the game's code is changed.
 
 WITH KSP COMMUNITY FIXES
   That mod loads the game its own, faster way. Where it is installed Warm Start does nothing:
@@ -41,7 +43,7 @@ WITH KSP COMMUNITY FIXES
 
 WHERE IT WORKS
   Made and measured on a Mac, and tried on Windows 11 (47 s to the main menu without it
-  there, 17 to 18.5 s with it). What 0.3.0 adds (the drag cubes kept, the look-ups by table)
-  has been run on the Mac only so far. Nobody has run it on Linux yet.
+  there, 17 to 18.5 s with it). What 0.3.0 and 0.4.0 add (the drag cubes kept, the look-ups
+  by table, the icons) has been run on the Mac only so far. Nobody has run it on Linux yet.
 
 Everything else: https://github.com/IshiakiZ/ksp-warm-start

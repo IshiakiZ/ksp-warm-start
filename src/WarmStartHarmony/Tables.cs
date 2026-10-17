@@ -42,6 +42,8 @@ namespace WarmStartHarmony
         {
             try { Tables.Begin(); }
             catch (Exception ex) { WarmStart.Companion.Log("the look-ups by table could not be put in (" + ex.Message + "): the game does its own"); }
+            try { Icons.Begin(); }
+            catch (Exception ex) { WarmStart.Companion.Log("the icons made without waking could not be put in (" + ex.Message + "): the game makes its own"); }
             Destroy(gameObject);
         }
     }

@@ -30,7 +30,8 @@ namespace WarmStart
     ///
     /// (From 0.3.0 there are two more: the parts' drag cubes kept across the times ModuleManager throws the game's
     /// record of them away (Cubes), and, where the Harmony mod is installed, the game's look-ups done by a table
-    /// (the companion library, src/WarmStartHarmony: the one part that changes the game's code).)
+    /// (the companion library, src/WarmStartHarmony: the one part that changes the game's code). From 0.4.0 the companion
+    /// also makes the parts' icons without waking the copies it throws away (src/WarmStartHarmony/Icons.cs).)
     ///
     /// None of the game's code is changed here. Each of them hands the game something through a door the game
     /// already has: a list it looks at before it loads a thing, a field it reads, a line it writes in its
@@ -44,10 +45,10 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.3.0";
+        public const string Version = "0.4.0";
 
         public static Mod Page;
-        public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables;
+        public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables, Icons;
 
         /// <summary>
         /// Where the game keeps the date of a file on its list. The game passes over a file whose texture it has
@@ -80,6 +81,7 @@ namespace WarmStart
             DragCubes = Page.Toggle("cubes", "The parts' drag cubes, kept", true, "ModuleManager throws the game's record of every part's drag cubes away whenever a mod is added, updated or taken out, and the start that follows makes them all again: half a minute for a thousand parts. With this on, the cubes of every part that is exactly what it was (its description after every patch, its models, the libraries its modules come from) are handed back to the game, and only the parts that changed are made again. A few are left to the game each time and compared with what was kept: if one ever differs, everything kept is thrown away.");
             Page.Heading("With the Harmony mod");
             Tables = Page.Toggle("tables", "Look-ups by table", true, "The game finds a model, a picture, a sound or a part's record by going through the whole list of them: with thousands of parts and models that is most of a minute at every start. With this on, and the Harmony mod (HarmonyKSP) installed, each is found by name in a table. This is the one part of Warm Start that puts code of its own in place of the game's: one look-up in 256 is checked against the game's own, and at the first difference the tables are put away for the session. Changing this takes effect at the next start.");
+            Icons = Page.Toggle("icons", "Icons made without waking", true, "The game makes each part's icon by copying the whole part, letting the part and every module in the copy set themselves up, and then taking them out again until only the meshes are left: a third of the time a part takes. With this on, and the Harmony mod installed, the copy is made asleep, and only the meshes ever wake. A kind of module that does something of its own as it wakes is trusted only once its icons have come out the same both ways; where one ever differs, the game makes those icons itself. Changing this takes effect at the next start.");
         }
 
         public static void Log(string text) => Kit.Log("Warm Start", text);
@@ -116,8 +118,8 @@ namespace WarmStart
     }
 
     /// <summary>
-    /// What Warm Start's companion library asks of it and gives it. (WarmStartHarmony: the look-ups by table. The game loads
-    /// that library only where the Harmony mod is installed; this one never needs Harmony.)
+    /// What Warm Start's companion library asks of it and gives it. (WarmStartHarmony: the look-ups by table and the icons made
+    /// without waking. The game loads that library only where the Harmony mod is installed; this one never needs Harmony.)
     /// </summary>
     public static class Companion
     {
@@ -130,7 +132,16 @@ namespace WarmStart
             get { Warm.Setup(); return Warm.On && Warm.Tables && !Warm.OthersDo; }
         }
 
-        /// <summary>A word kept by hand in the mod's settings file ("tablecheck = all": every look-up checked, for trying it out).</summary>
+        /// <summary>What the companion has to say of the icons, once it has put its own way of making them in.</summary>
+        public static Func<string> IconsReport;
+
+        /// <summary>Whether the icons are to be made without waking: the mod on, their switch on, and no other mod loading the game its own way.</summary>
+        public static bool WantsIcons
+        {
+            get { Warm.Setup(); return Warm.On && Warm.Icons && !Warm.OthersDo; }
+        }
+
+        /// <summary>A word kept by hand in the mod's settings file ("tablecheck = all": every look-up checked, "iconcheck = all": every icon made both ways, for trying them out).</summary>
         public static string Kept(string key) { Warm.Setup(); return Warm.Page.Kept(key); }
 
         public static void Log(string text) => Warm.Log(text);
@@ -242,6 +253,7 @@ namespace WarmStart
         {
             // (the look-ups by table, where they are in: said in the log at the main menu, and at every scene while they are being tried out)
             if (Companion.TablesReport != null && (scene == GameScenes.MAINMENU ? menuAt < 0f : Warm.Page.Kept("tablecheck") == "all")) Warm.Log(Companion.TablesReport());
+            if (Companion.IconsReport != null && scene == GameScenes.MAINMENU && menuAt < 0f) Warm.Log(Companion.IconsReport());
             if (scene != GameScenes.MAINMENU || menuAt >= 0f) return;
             menuAt = Time.realtimeSinceStartup;
             Where.End();
@@ -286,7 +298,8 @@ namespace WarmStart
             said = (menuAt >= 0f ? "This start took " + menuAt.ToString("F1") + " seconds to the main menu" + (warm ? "." : partly ? ", with some of what can be kept not kept yet." : ", with nothing kept to hand over.") : "Still starting.")
                  + (!string.IsNullOrEmpty(cold) && (warm || partly) ? " The last start with nothing handed over took " + cold + "." : "")
                  + (!string.IsNullOrEmpty(took) && !warm ? " The last with everything handed over took " + took + "." : "")
-                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Warm.Tables ? "\n" + (Companion.TablesReport != null ? Companion.TablesReport() : "Look-ups by table need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
+                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Warm.Tables ? "\n" + (Companion.TablesReport != null ? Companion.TablesReport() : "Look-ups by table need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "")
+                 + (Warm.Icons ? "\n" + (Companion.IconsReport != null ? Companion.IconsReport() : "Icons made without waking need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
             GUILayout.Label(said, Host.Small);
         }
 

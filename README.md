@@ -24,9 +24,10 @@ it is fast.
   (half a minute for a thousand parts). From 0.3.0 the cubes of every part that has not changed are handed back: 15 s
   of part compiling came down to 3 s here, with 480 parts.
 * **With the Harmony mod** (not needed), the game's look-ups of models, pictures and sounds go by a table instead
-  of a walk through every one: a tenth off a start with thousands of parts. That is the one part that changes the
-  game's code; it checks itself against the game's own and has a switch. Without Harmony none of the game's code is
-  changed.
+  of a walk through every one (a tenth off a start with thousands of parts), and from 0.4.0 each part's icon is made
+  without copying and waking all that the game throws away (0.71 s of icons came down to 0.44 s here, with 474 parts).
+  These are the only parts that change the game's code; each checks itself against the game's own and has a switch.
+  Without Harmony none of the game's code is changed.
 * With **KSP Community Fixes** installed, which loads the game its own faster way, Warm Start does nothing: use one
   or the other.
 * Its page in the Keystone window (the keystone button on the game's toolbar, or Alt-K; Option-K on a Mac) has a
@@ -34,7 +35,7 @@ it is fast.
 
 ## Works on
 
-Windows 11 and Mac: measured (what 0.3.0 adds, on the Mac only so far). Linux: never run (it is plain C#, with
+Windows 11 and Mac: measured (what 0.3.0 and 0.4.0 add, on the Mac only so far). Linux: never run (it is plain C#, with
 nothing of one system's in it).
 
 **More:** [the long description](https://github.com/IshiakiZ/ksp-warm-start/wiki/The-long-description) (everything in full, and what was
