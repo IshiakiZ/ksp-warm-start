@@ -5,6 +5,8 @@ The game starts in less than half the time, because what it works out afresh at 
 is kept from the last one: the expansions' big files unpacked, the PNG pictures made into
 textures, what the game reads out of its small bundles, and (from 0.3.0) the parts' drag
 cubes, which ModuleManager makes the game work out again after every change to the mods.
+And (from 0.5.0) the game's models are read one after another, where the game waits a frame
+after each: the main menu about a second sooner.
 
 INSTALL
   This mod needs Keystone, the base it stands on, which is a separate download:
@@ -15,7 +17,7 @@ INSTALL
   mod, delete the WarmStart folder.
 
 THE FIRST START
-  The first start is as slow as ever, and at its main menu a minute of work goes on in the
+  The first start is as slow as ever, and at its main menu some twenty seconds of work go on in the
   background (a line at the foot of the screen says so). From the second start on it is fast.
 
 WHAT IT COSTS
@@ -33,17 +35,22 @@ WITH THE HARMONY MOD (not needed)
   off a start with thousands of parts, nothing that shows with the game alone. And (from
   0.4.0) each part's icon is made without copying and waking all that the game throws away:
   0.71 s of icons came down to 0.44 s with the game's own 474 parts, more with more parts.
-  These are the only parts of this mod that change the game's code; each checks itself
-  against the game's own way and stands aside where they differ; each has a switch. Without
-  Harmony none of the game's code is changed.
+  From 0.5.0, while the game loads, the localiser's answers are kept, and the game's asks
+  whether a flight is going on (three for every part, each a search through everything
+  loaded) are answered at once: 37 s of parts came down to 14 s on a made-up install of
+  4,755 parts. These four are the only parts of this mod that change the game's code; each
+  checks itself against the game's own way and stands aside where they differ; each has a
+  switch. Without Harmony none of the game's code is changed.
 
 WITH KSP COMMUNITY FIXES
-  That mod loads the game its own, faster way. Where it is installed Warm Start does nothing:
-  use one or the other.
+  That mod loads the game its own, faster way. Where it is installed Warm Start leaves the
+  loading to it, and (from 0.5.0) keeps only the parts' drag cubes across changes to the
+  mods, the one thing of Warm Start's that it does not do.
 
 WHERE IT WORKS
   Made and measured on a Mac, and tried on Windows 11 (47 s to the main menu without it
   there, 17 to 18.5 s with it). What 0.3.0 and 0.4.0 add (the drag cubes kept, the look-ups
-  by table, the icons) has been run on the Mac only so far. Nobody has run it on Linux yet.
+  by table, the icons) ran on Windows too, 21 s to the main menu; what 0.5.0 adds has been
+  run on the Mac only so far. Nobody has run it on Linux yet.
 
 Everything else: https://github.com/IshiakiZ/ksp-warm-start

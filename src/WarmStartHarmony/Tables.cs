@@ -44,6 +44,8 @@ namespace WarmStartHarmony
             catch (Exception ex) { WarmStart.Companion.Log("the look-ups by table could not be put in (" + ex.Message + "): the game does its own"); }
             try { Icons.Begin(); }
             catch (Exception ex) { WarmStart.Companion.Log("the icons made without waking could not be put in (" + ex.Message + "): the game makes its own"); }
+            try { Words.Begin(); }
+            catch (Exception ex) { WarmStart.Companion.Log("the words looked up once could not be put in (" + ex.Message + "): the localiser answers for itself"); }
             Destroy(gameObject);
         }
     }
@@ -172,6 +174,8 @@ namespace WarmStartHarmony
             h.Patch(AccessTools.Method(db, "GetAudioClip", new[] { typeof(string) }), Pre(nameof(GetAudioClip)), said);
             h.Patch(AccessTools.Method(db, "GetAudioFile", new[] { typeof(string) }), Pre(nameof(GetAudioFile)), said);
             h.Patch(AccessTools.Method(typeof(PartLoader), "GetDatabaseConfig", new[] { typeof(Part) }), Pre(nameof(Record)), said);
+            // (and the asks for a flight while the game loads, where there is none to find: see NoFlightYet)
+            try { NoFlightYet.Begin(h); } catch (Exception ex) { WarmStart.Companion.Log("the asks for a flight while loading were left to the game (" + ex.Message + ")"); }
             WarmStart.Companion.TablesReport = Report;
             WarmStart.Companion.Log("look-ups by table are in: models, pictures, sounds and the parts' records are found by name in a table, not by walking their lists" + (all ? " (every look-up checked against the game's own walk, as asked)" : ""));
         }
@@ -179,7 +183,7 @@ namespace WarmStartHarmony
         static string Report()
         {
             if (broken) return "Look-ups by table were put away this session: " + why + " The game does its own look-ups, as it always has.";
-            return "Look-ups by table: " + asked.ToString("N0") + " so far (models, pictures, sounds, parts' records); " + checkedTimes.ToString("N0") + " of them checked against the game's own walk, and all the same.";
+            return "Look-ups by table: " + asked.ToString("N0") + " so far (models, pictures, sounds, parts' records); " + checkedTimes.ToString("N0") + " of them checked against the game's own walk, and all the same." + NoFlightYet.Said();
         }
 
         /// <summary>What a look-up found by the table, kept while the game's own walk is run beside it.</summary>

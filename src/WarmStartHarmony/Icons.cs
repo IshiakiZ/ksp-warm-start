@@ -69,6 +69,8 @@ namespace WarmStartHarmony
             try { h.UnpatchAll(Id); } catch (Exception) { }
             h.Patch(original, new HarmonyMethod(typeof(Icons).GetMethod(nameof(Make), BindingFlags.Static | BindingFlags.NonPublic)));
             WarmStart.Companion.IconsReport = Report;
+            WarmStart.Companion.IconsKeep = Keep;
+            if (!all) { try { Recall(); } catch (Exception ex) { WarmStart.Companion.Log("what earlier starts learnt of the icons could not be read (" + ex.Message + "): every kind is tried afresh"); kinds.Clear(); } }
             WarmStart.Companion.Log("the parts' icons are made without copying and waking what is thrown away" + (all ? " (every one also made the game's way and compared, as asked)" : ""));
         }
 
@@ -76,8 +78,80 @@ namespace WarmStartHarmony
         {
             if (broken) return "Icons made without waking: put away this session, " + why + " The game makes its own, as it always has.";
             return "Icons made without waking: " + fast + " of " + seen + " parts' icons (" + light + " of them copying only what is below the part); " + checks + " made both ways and compared, the game's kept"
+                 + (fromBefore > 0 ? " (" + fromBefore + " kinds known from earlier starts)" : "")
                  + (differed.Count > 0 ? " (" + differed.Count + " different, all with kinds not yet trusted, now left to the game)" : " (all the same)")
                  + (left > 0 ? "; " + left + " left to the game, a kind in them changing its icon" : "") + ".";
+        }
+
+        // ---- what earlier starts learnt (0.5.0)
+
+        // Every kind with code of its own for waking was tried afresh at every start: the first part with it made both ways and
+        // compared, 87 parts of the game's 474 here, which was most of what the icons still took. What was learnt is kept for the
+        // next start (in this mod's own folder, one line a kind): the kinds that came out the same, and those that did not. Each
+        // with the size and date of the library it is in: a mod updated, or any library changed, and its kinds are tried again.
+        // The one part in sixteen tried again among trusted kinds goes on as before; anything that comes out different where it
+        // was trusted puts the icons away for the session and throws what was kept away, so the next start tries everything again.
+        // (Libraries the game was not given as files, as a development build's are, are never kept.)
+        const string KeptName = "icon-kinds.txt";
+        static int fromBefore;
+
+        static string Stamp(Assembly a)
+        {
+            try
+            {
+                if (a.IsDynamic || string.IsNullOrEmpty(a.Location)) return "";
+                var f = new System.IO.FileInfo(a.Location);
+                return f.Exists ? f.Length + ":" + f.LastWriteTimeUtc.Ticks : "";
+            }
+            catch (Exception) { return ""; }
+        }
+
+        static void Recall()
+        {
+            string path = WarmStart.Companion.Folder + KeptName;
+            if (!System.IO.File.Exists(path)) return;
+            var byName = new Dictionary<string, Assembly>();
+            foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                string n = a.GetName().Name;
+                if (!byName.ContainsKey(n)) byName[n] = a;
+                else byName[n] = null;                  // (two libraries of one name: neither is trusted from before)
+            }
+            foreach (string line in System.IO.File.ReadAllLines(path))
+            {
+                string[] w = line.Split('\t');
+                if (w.Length != 4 || (w[0] != "trusted" && w[0] != "never")) continue;
+                if (!byName.TryGetValue(w[1], out Assembly a) || a == null) continue;
+                string stamp = Stamp(a);
+                if (stamp.Length == 0 || stamp != w[2]) continue;
+                Type t = a.GetType(w[3], false);
+                if (t == null) continue;
+                kinds[t] = w[0] == "trusted" ? Trusted + 1 : Never;
+                fromBefore++;
+            }
+        }
+
+        /// <summary>At the main menu: the kinds tried and found the same, or not, written down for the next start.</summary>
+        static void Keep()
+        {
+            string path = WarmStart.Companion.Folder + KeptName;
+            if (broken || all)
+            {
+                // (a difference where none was looked for: nothing learnt is to be trusted, and the next start tries every kind again)
+                if (broken && System.IO.File.Exists(path)) System.IO.File.Delete(path);
+                return;
+            }
+            var lines = new List<string>();
+            foreach (KeyValuePair<Type, int> kv in kinds)
+            {
+                if (kv.Value != Trusted + 1 && kv.Value != Never) continue;
+                string stamp = Stamp(kv.Key.Assembly);
+                if (stamp.Length == 0 || string.IsNullOrEmpty(kv.Key.FullName)) continue;
+                lines.Add((kv.Value == Never ? "never" : "trusted") + "\t" + kv.Key.Assembly.GetName().Name + "\t" + stamp + "\t" + kv.Key.FullName);
+            }
+            lines.Sort(StringComparer.Ordinal);
+            System.IO.Directory.CreateDirectory(WarmStart.Companion.Folder);
+            System.IO.File.WriteAllLines(path, lines.ToArray());
         }
 
         // ---- which parts can be made this way, and how

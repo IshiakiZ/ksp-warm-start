@@ -45,10 +45,10 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
 
         public static Mod Page;
-        public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables, Icons;
+        public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables, Icons, Models, Words;
 
         /// <summary>
         /// Where the game keeps the date of a file on its list. The game passes over a file whose texture it has
@@ -74,14 +74,16 @@ namespace WarmStart
             On = Page.Toggle("on", "Warm start", true, "Off: the game starts as it always has. What has been kept stays on the disk, and is used again when this is switched back on.");
             Fades = Page.Toggle("fades", "Do not wait on the loading screen", true, "While one loading picture fades into the next, the game's loader does one file and then waits for the next frame to be drawn, so that the fade is smooth: for a second or two in every several it loads at the speed the screen is drawn at. With this it goes on loading at full speed, and the fades are jerky instead.");
             Frames = Page.Toggle("frames", "Load at any frame rate", true, "Some of the game's loading waits for a frame to be drawn between one file and the next (every PNG picture does). The game holds its frame rate to the limit in its settings while it loads, so those files come in no faster than that. With this the limit is lifted until the main menu is there, and put back.");
+            Models = Page.Toggle("models", "Models without a frame between them", true, "The game reads its models one a frame: it waits for the next frame to be drawn after every one, though reading most takes a thousandth of a second or two. With six hundred models that is about three seconds of the start spent drawing the loading screen. With this the models are read one after another by the game's own reader, in a few slices, and the game passes over each as it comes to it.");
             Page.Heading("What is kept");
             Pictures = Page.Toggle("pictures", "Textures, ready made", true, "What the game makes of each PNG picture (unpacking it, squeezing it into the graphics card's own format, making its smaller copies) is kept from the first start, and handed back at every later one; and the DDS pictures, which are finished already, are read by several threads ahead of the game. A few hundred megabytes of disk. A picture whose file changes is made again.");
             Small = Page.Toggle("small", "What is in the small bundles, kept", true, "The game opens every one of its couple of hundred small bundles (the pages of its manual, mostly) at every start, only to read a short description of what is in each: and opening one means unpacking all of it. With this the descriptions are kept from one start to the next, and while no bundle has changed none is opened. Next to no disk.");
             Expansions = Page.Toggle("expansions", "The expansions' files, unpacked", true, "Making History and Breaking Ground keep their models and scenes in three files that the game has to unpack whole, into memory, at every start: about a third of the whole wait. With this, a copy of each is kept that needs no unpacking, and the game is handed that. It takes about a gigabyte of disk, is made once (in the background, at the main menu, the first time), and is made again by itself if the expansion's own file ever changes.");
             DragCubes = Page.Toggle("cubes", "The parts' drag cubes, kept", true, "ModuleManager throws the game's record of every part's drag cubes away whenever a mod is added, updated or taken out, and the start that follows makes them all again: half a minute for a thousand parts. With this on, the cubes of every part that is exactly what it was (its description after every patch, its models, the libraries its modules come from) are handed back to the game, and only the parts that changed are made again. A few are left to the game each time and compared with what was kept: if one ever differs, everything kept is thrown away.");
             Page.Heading("With the Harmony mod");
-            Tables = Page.Toggle("tables", "Look-ups by table", true, "The game finds a model, a picture, a sound or a part's record by going through the whole list of them: with thousands of parts and models that is most of a minute at every start. With this on, and the Harmony mod (HarmonyKSP) installed, each is found by name in a table. This is the one part of Warm Start that puts code of its own in place of the game's: one look-up in 256 is checked against the game's own, and at the first difference the tables are put away for the session. Changing this takes effect at the next start.");
+            Tables = Page.Toggle("tables", "Look-ups by table", true, "The game finds a model, a picture, a sound or a part's record by going through the whole list of them: with thousands of parts and models that is most of a minute at every start. With this on, and the Harmony mod (HarmonyKSP) installed, each is found by name in a table; and while the game loads, its asks whether a flight is going on (three for every part, each a search through everything loaded) are answered at once. One look-up in 256 is checked against the game's own, and at the first difference the tables are put away for the session. Changing this takes effect at the next start.");
             Icons = Page.Toggle("icons", "Icons made without waking", true, "The game makes each part's icon by copying the whole part, letting the part and every module in the copy set themselves up, and then taking them out again until only the meshes are left: a third of the time a part takes. With this on, and the Harmony mod installed, the copy is made asleep, and only the meshes ever wake. A kind of module that does something of its own as it wakes is trusted only once its icons have come out the same both ways; where one ever differs, the game makes those icons itself. Changing this takes effect at the next start.");
+            Words = Page.Toggle("words", "Words looked up once", true, "Every field, event and action of every part module has its name looked up by the game's localiser as it is made, some two hundred a module: hundreds of thousands of times at a start, each time afresh. With this on, and the Harmony mod installed, each answer is kept while the game loads and given again, and all of it let go at the main menu. One in 256 is asked of the localiser as well and the two compared; at the first difference the localiser answers for itself from then on. Changing this takes effect at the next start.");
         }
 
         public static void Log(string text) => Kit.Log("Warm Start", text);
@@ -141,6 +143,21 @@ namespace WarmStart
             get { Warm.Setup(); return Warm.On && Warm.Icons && !Warm.OthersDo; }
         }
 
+        /// <summary>What the companion has to say of the words it keeps, once it has put that in.</summary>
+        public static Func<string> WordsReport;
+
+        /// <summary>Whether the localiser's answers are to be kept: the mod on, the switch on, and no other mod loading the game its own way.</summary>
+        public static bool WantsWords
+        {
+            get { Warm.Setup(); return Warm.On && Warm.Words && !Warm.OthersDo; }
+        }
+
+        /// <summary>To be called at the main menu: the companion keeps what it learnt of the icons for the next start.</summary>
+        public static Action IconsKeep;
+
+        /// <summary>The folder Warm Start keeps its files in.</summary>
+        public static string Folder => Warm.Folder;
+
         /// <summary>A word kept by hand in the mod's settings file ("tablecheck = all": every look-up checked, "iconcheck = all": every icon made both ways, for trying them out).</summary>
         public static string Kept(string key) { Warm.Setup(); return Warm.Page.Kept(key); }
 
@@ -172,7 +189,19 @@ namespace WarmStart
             others = Warm.OthersDo;
             // (where the start goes, mod by mod: listened for whoever loads the game)
             if (Warm.On) Where.Begin();
-            if (others) Warm.Log("KSP Community Fixes is installed, and loads the game its own way: Warm Start leaves everything to it");
+            if (others) Warm.Log("KSP Community Fixes is installed, and loads the game its own way: Warm Start leaves all of that to it, and keeps only the parts' drag cubes across changes to the mods, which it does not do");
+            // (Beside KSP Community Fixes, from 0.5.0, the one thing of this mod's it has nothing like: the parts' drag cubes kept
+            // across the times ModuleManager throws the game's record of them away. It loads the game its own way, but it still runs
+            // the game's own list of loaders and reads the game's own record of the cubes; this puts the kept cubes into that record,
+            // as a loader of its own before the parts', and changes none of the game's code. Its faster making of cubes makes the
+            // rest. Everything else of this mod's it does in its own way, and two at the same job would only be in each other's way.)
+            if (Warm.On && others && Warm.DragCubes)
+            {
+                try { Cubes.Begin(); }
+                catch (Exception ex) { Warm.Log("could not see to the parts' drag cubes (" + ex.Message + ")"); }
+            }
+            // (The expansions' files handed over unpacked were tried beside it too, 2026-10-18: no faster, 11.3 seconds against 12.0.
+            // Its own loader for them reads and checks each expansion's file itself, and does not look at what is loaded already.)
             if (Warm.On && !others)
             {
                 if (Warm.Expansions)
@@ -181,6 +210,7 @@ namespace WarmStart
                     catch (Exception ex) { Warm.Log("could not hand over the expansions' files (" + ex.Message + "): the game will load them itself"); }
                 }
                 if (Warm.Pictures) { Textures.Begin(); pictures = true; }
+                if (Warm.Models) { Models.Begin(); models = Models.Busy; }
                 if (Warm.Small) { Definitions.Begin(); small = true; }
                 if (Warm.DragCubes)
                 {
@@ -197,7 +227,7 @@ namespace WarmStart
             if (menuAt < 0f && waits.Count < 40) waits.Add(Time.realtimeSinceStartup.ToString("F1") + " s: the scene " + scene.name + " is loaded" + (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive ? " (added)" : ""));
         }
 
-        bool pictures, small, warm, partly, others;
+        bool pictures, small, warm, partly, others, models;
         float lastFrame;
         readonly System.Collections.Generic.List<string> waits = new System.Collections.Generic.List<string>();
 
@@ -212,6 +242,11 @@ namespace WarmStart
                 catch (Exception ex) { pictures = false; Warm.Log("could not see to the textures (" + ex.Message + "): the game loads what is missing itself"); }
             }
             if (small) { Definitions.Step(); small = Definitions.Busy; }
+            if (models)
+            {
+                try { Models.Step(); models = Models.Busy; }
+                catch (Exception ex) { models = false; Warm.Log("could not read the models (" + ex.Message + "): the game reads the rest itself"); }
+            }
             // (the long waits between one frame and the next, while the game starts: said at the main menu, for whoever wants to know where the time went)
             float now = Time.realtimeSinceStartup;
             if (menuAt < 0f && lastFrame > 0f && now - lastFrame > 0.3f && waits.Count < 40) waits.Add(lastFrame.ToString("F1") + " s: " + (now - lastFrame).ToString("F1"));
@@ -254,9 +289,16 @@ namespace WarmStart
             // (the look-ups by table, where they are in: said in the log at the main menu, and at every scene while they are being tried out)
             if (Companion.TablesReport != null && (scene == GameScenes.MAINMENU ? menuAt < 0f : Warm.Page.Kept("tablecheck") == "all")) Warm.Log(Companion.TablesReport());
             if (Companion.IconsReport != null && scene == GameScenes.MAINMENU && menuAt < 0f) Warm.Log(Companion.IconsReport());
+            if (Companion.WordsReport != null && scene == GameScenes.MAINMENU && menuAt < 0f) Warm.Log(Companion.WordsReport());
+            if (Companion.IconsKeep != null && scene == GameScenes.MAINMENU && menuAt < 0f)
+            {
+                try { Companion.IconsKeep(); }
+                catch (Exception ex) { Warm.Log("could not keep what was learnt of the icons (" + ex.Message + ")"); }
+            }
             if (scene != GameScenes.MAINMENU || menuAt >= 0f) return;
             menuAt = Time.realtimeSinceStartup;
             Where.End();
+            Models.Through();
             // How long this start took, from the game being started to the main menu being there, kept beside how long the last
             // start with nothing handed over took: so that the page can say what the mod is worth here.
             string took = menuAt.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
@@ -278,7 +320,7 @@ namespace WarmStart
                 try { Textures.Tell(Warm.Folder + list); Definitions.Tell(Warm.Folder + "defs_" + list); }
                 catch (Exception ex) { Warm.Log("could not write the lists for comparing (" + ex.Message + ")"); }
             }
-            if (Warm.On && Warm.DragCubes && !others)
+            if (Warm.On && Warm.DragCubes)
             {
                 try { Cubes.Keep(); }
                 catch (Exception ex) { Warm.Log("could not keep the parts' drag cubes (" + ex.Message + ")"); }
@@ -291,15 +333,16 @@ namespace WarmStart
             string cold = Warm.Page.Kept("cold"), took = Warm.Page.Kept("took");
             if (others)
             {
-                GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves everything to it."
-                                + (menuAt >= 0f ? " This start took " + menuAt.ToString("F1") + " seconds to the main menu." : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : ""), Host.Small);
+                GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves that to it, and keeps only the parts' drag cubes across changes to the mods, which it does not do."
+                                + (menuAt >= 0f ? " This start took " + menuAt.ToString("F1") + " seconds to the main menu." : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : ""), Host.Small);
                 return;
             }
             said = (menuAt >= 0f ? "This start took " + menuAt.ToString("F1") + " seconds to the main menu" + (warm ? "." : partly ? ", with some of what can be kept not kept yet." : ", with nothing kept to hand over.") : "Still starting.")
                  + (!string.IsNullOrEmpty(cold) && (warm || partly) ? " The last start with nothing handed over took " + cold + "." : "")
                  + (!string.IsNullOrEmpty(took) && !warm ? " The last with everything handed over took " + took + "." : "")
-                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Warm.Tables ? "\n" + (Companion.TablesReport != null ? Companion.TablesReport() : "Look-ups by table need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "")
-                 + (Warm.Icons ? "\n" + (Companion.IconsReport != null ? Companion.IconsReport() : "Icons made without waking need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
+                 + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Models.Report.Length > 0 ? "\n" + Models.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Warm.Tables ? "\n" + (Companion.TablesReport != null ? Companion.TablesReport() : "Look-ups by table need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "")
+                 + (Warm.Icons ? "\n" + (Companion.IconsReport != null ? Companion.IconsReport() : "Icons made without waking need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "")
+                 + (Warm.Words ? "\n" + (Companion.WordsReport != null ? Companion.WordsReport() : "Words looked up once need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
             GUILayout.Label(said, Host.Small);
         }
 
