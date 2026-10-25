@@ -44,13 +44,16 @@ WITH THE HARMONY MOD (not needed)
 
 WITH KSP COMMUNITY FIXES
   That mod loads the game its own, faster way. Where it is installed Warm Start leaves the
-  loading to it, and (from 0.5.0) keeps only the parts' drag cubes across changes to the
-  mods, the one thing of Warm Start's that it does not do.
+  loading to it, and keeps only what it does not do: the parts' drag cubes across changes to
+  the mods (from 0.5.0) and the expansions' files unpacked (from 0.6.0: it loads those from
+  their packed files at every start, which Warm Start holds back while it hands its copies
+  over; on Windows the main menu after 18 s instead of 26 to 27 with both installed).
 
 WHERE IT WORKS
   Made and measured on a Mac, and tried on Windows 11 (47 s to the main menu without it
   there, 17 to 18.5 s with it). What 0.3.0 and 0.4.0 add (the drag cubes kept, the look-ups
-  by table, the icons) ran on Windows too, 21 s to the main menu; what 0.5.0 adds has been
-  run on the Mac only so far. Nobody has run it on Linux yet.
+  by table, the icons) ran on Windows too, 21 s to the main menu, and so did what 0.5.0 and
+  0.6.0 add (17.4 to 17.7 s; 18.1 to 18.4 beside KSP Community Fixes). Nobody has run it on
+  Linux yet.
 
 Everything else: https://github.com/IshiakiZ/ksp-warm-start

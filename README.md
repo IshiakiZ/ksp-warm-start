@@ -38,14 +38,18 @@ it is fast.
 * **From 0.5.0 the models are read one after another**, where the game waits a frame after every one: the models'
   stretch of a start 0.9 s instead of 1.6 s and more here (642 models), the main menu about a second sooner.
 * With **KSP Community Fixes** installed, which loads the game its own faster way, Warm Start leaves the loading to
-  it and, from 0.5.0, keeps only the parts' drag cubes across mod changes, the one thing it does not do (tried beside
-  it: 431 parts' cubes handed back after a change).
+  it and keeps only what it does not do: the parts' drag cubes across mod changes (from 0.5.0; tried beside it: 431
+  parts' cubes handed back after a change) and, **from 0.6.0, the expansions' files unpacked**. That mod loads them from
+  their packed files at every start, and the main menu waits on it; Warm Start holds that back while it hands its copies
+  over. On Windows, with both installed, the main menu after 18.1 to 18.4 s instead of 26.3 to 27.1 (Warm Start alone:
+  17.4 to 17.7).
 * Its page in the Keystone window (the keystone button on the game's toolbar, or Alt-K; Option-K on a Mac) has a
   switch for each part, and says how long the start took and which mods the seconds went to.
 
 ## Works on
 
-Windows 11 and Mac: measured (what 0.3.0 and 0.4.0 add ran on Windows too, 21 s to the main menu; 0.5.0's on the Mac only).
+Windows 11 and Mac: measured (on Windows 0.5.0's too, and 0.6.0's beside KSP Community Fixes: 17.4 to 17.7 s to the main
+menu, 18.1 to 18.4 with KSP Community Fixes).
 Linux: never run (it is plain C#, with nothing of one system's in it).
 
 **More:** [the long description](https://github.com/IshiakiZ/ksp-warm-start/wiki/The-long-description) (everything in full, and what was

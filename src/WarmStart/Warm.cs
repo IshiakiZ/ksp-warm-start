@@ -45,7 +45,7 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.5.0";
+        public const string Version = "0.6.0";
 
         public static Mod Page;
         public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables, Icons, Models, Words;
@@ -78,7 +78,7 @@ namespace WarmStart
             Page.Heading("What is kept");
             Pictures = Page.Toggle("pictures", "Textures, ready made", true, "What the game makes of each PNG picture (unpacking it, squeezing it into the graphics card's own format, making its smaller copies) is kept from the first start, and handed back at every later one; and the DDS pictures, which are finished already, are read by several threads ahead of the game. A few hundred megabytes of disk. A picture whose file changes is made again.");
             Small = Page.Toggle("small", "What is in the small bundles, kept", true, "The game opens every one of its couple of hundred small bundles (the pages of its manual, mostly) at every start, only to read a short description of what is in each: and opening one means unpacking all of it. With this the descriptions are kept from one start to the next, and while no bundle has changed none is opened. Next to no disk.");
-            Expansions = Page.Toggle("expansions", "The expansions' files, unpacked", true, "Making History and Breaking Ground keep their models and scenes in three files that the game has to unpack whole, into memory, at every start: about a third of the whole wait. With this, a copy of each is kept that needs no unpacking, and the game is handed that. It takes about a gigabyte of disk, is made once (in the background, at the main menu, the first time), and is made again by itself if the expansion's own file ever changes.");
+            Expansions = Page.Toggle("expansions", "The expansions' files, unpacked", true, "Making History and Breaking Ground keep their models and scenes in three files that the game has to unpack whole, into memory, at every start: about a third of the whole wait. With this, a copy of each is kept that needs no unpacking, and the game is handed that. It takes about a gigabyte of disk, is made once (in the background, at the main menu, the first time), and is made again by itself if the expansion's own file ever changes. Beside KSP Community Fixes (with the Harmony mod, which it needs as well) its own loading of these files, from the packed ones, is held back while the copies are handed over.");
             DragCubes = Page.Toggle("cubes", "The parts' drag cubes, kept", true, "ModuleManager throws the game's record of every part's drag cubes away whenever a mod is added, updated or taken out, and the start that follows makes them all again: half a minute for a thousand parts. With this on, the cubes of every part that is exactly what it was (its description after every patch, its models, the libraries its modules come from) are handed back to the game, and only the parts that changed are made again. A few are left to the game each time and compared with what was kept: if one ever differs, everything kept is thrown away.");
             Page.Heading("With the Harmony mod");
             Tables = Page.Toggle("tables", "Look-ups by table", true, "The game finds a model, a picture, a sound or a part's record by going through the whole list of them: with thousands of parts and models that is most of a minute at every start. With this on, and the Harmony mod (HarmonyKSP) installed, each is found by name in a table; and while the game loads, its asks whether a flight is going on (three for every part, each a search through everything loaded) are answered at once. One look-up in 256 is checked against the game's own, and at the first difference the tables are put away for the session. Changing this takes effect at the next start.");
@@ -152,6 +152,34 @@ namespace WarmStart
             get { Warm.Setup(); return Warm.On && Warm.Words && !Warm.OthersDo; }
         }
 
+        /// <summary>Whether any of Warm Start's unpacked copies of the expansions' files is on the game's list at this start: then KSP Community Fixes' own loading of them is held back (it would load them again, from the packed files).</summary>
+        public static bool Handed => Bundles.HandedAny;
+
+        /// <summary>
+        /// KSP Community Fixes' own loading of the expansions' files held back wherever Warm Start hands over its copies, by the
+        /// companion (WarmStartHarmony.Aside: that takes Harmony, which this library never needs, and which KSP Community Fixes
+        /// needs as well). True once that is in place; why not, where it is not.
+        /// </summary>
+        internal static bool HoldPreload(out string said)
+        {
+            foreach (AssemblyLoader.LoadedAssembly a in AssemblyLoader.loadedAssemblies)
+            {
+                if (a == null || a.name != "WarmStartHarmony") continue;
+                System.Reflection.MethodInfo m = a.assembly.GetType("WarmStartHarmony.Aside", false)?.GetMethod("Preload", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                if (m == null) { said = "Warm Start's companion here is older than Warm Start"; return false; }
+                object[] args = { null };
+                try
+                {
+                    bool done = (bool)m.Invoke(null, args);
+                    said = args[0] as string ?? "";
+                    return done;
+                }
+                catch (Exception ex) { said = (ex.InnerException ?? ex).Message; return false; }
+            }
+            said = "that needs Warm Start's companion, which the game loads only where the Harmony mod is installed";
+            return false;
+        }
+
         /// <summary>To be called at the main menu: the companion keeps what it learnt of the icons for the next start.</summary>
         public static Action IconsKeep;
 
@@ -189,7 +217,26 @@ namespace WarmStart
             others = Warm.OthersDo;
             // (where the start goes, mod by mod: listened for whoever loads the game)
             if (Warm.On) Where.Begin();
-            if (others) Warm.Log("KSP Community Fixes is installed, and loads the game its own way: Warm Start leaves all of that to it, and keeps only the parts' drag cubes across changes to the mods, which it does not do");
+            if (others) Warm.Log("KSP Community Fixes is installed, and loads the game its own way: Warm Start leaves that to it, and keeps only what it does not do: the parts' drag cubes across changes to the mods" + (Warm.Expansions ? ", and the expansions' files unpacked" : ""));
+            // The expansions' files, handed over unpacked: beside KSP Community Fixes as well (from 0.6.0), where its own loading of
+            // them, from the packed files at every start, which the main menu waits on, is held back for it by the companion. Not
+            // where that cannot be done: the copies would then be loaded twice over. (Handed over beside it on 2026-10-18 with that
+            // loading of its in place, they were no faster, 11.3 seconds against 12.0. Held back, on the PC 2026-10-24, the main
+            // menu after 18.4 s against 26.3 to 26.7: WarmStartHarmony/Aside.cs.)
+            if (Warm.On && Warm.Expansions)
+            {
+                expansions = true;
+                if (others && !Companion.HoldPreload(out string why))
+                {
+                    expansions = false;
+                    Warm.Log("the expansions' files are left to KSP Community Fixes (" + why + ")");
+                }
+                if (expansions)
+                {
+                    try { handed = Bundles.Offer(); }
+                    catch (Exception ex) { Warm.Log("could not hand over the expansions' files (" + ex.Message + "): the game will load them itself"); }
+                }
+            }
             // (Beside KSP Community Fixes, from 0.5.0, the one thing of this mod's it has nothing like: the parts' drag cubes kept
             // across the times ModuleManager throws the game's record of them away. It loads the game its own way, but it still runs
             // the game's own list of loaders and reads the game's own record of the cubes; this puts the kept cubes into that record,
@@ -200,15 +247,8 @@ namespace WarmStart
                 try { Cubes.Begin(); }
                 catch (Exception ex) { Warm.Log("could not see to the parts' drag cubes (" + ex.Message + ")"); }
             }
-            // (The expansions' files handed over unpacked were tried beside it too, 2026-10-18: no faster, 11.3 seconds against 12.0.
-            // Its own loader for them reads and checks each expansion's file itself, and does not look at what is loaded already.)
             if (Warm.On && !others)
             {
-                if (Warm.Expansions)
-                {
-                    try { handed = Bundles.Offer(); }
-                    catch (Exception ex) { Warm.Log("could not hand over the expansions' files (" + ex.Message + "): the game will load them itself"); }
-                }
                 if (Warm.Pictures) { Textures.Begin(); pictures = true; }
                 if (Warm.Models) { Models.Begin(); models = Models.Busy; }
                 if (Warm.Small) { Definitions.Begin(); small = true; }
@@ -227,7 +267,7 @@ namespace WarmStart
             if (menuAt < 0f && waits.Count < 40) waits.Add(Time.realtimeSinceStartup.ToString("F1") + " s: the scene " + scene.name + " is loaded" + (mode == UnityEngine.SceneManagement.LoadSceneMode.Additive ? " (added)" : ""));
         }
 
-        bool pictures, small, warm, partly, others, models;
+        bool pictures, small, warm, partly, others, models, expansions;
         float lastFrame;
         readonly System.Collections.Generic.List<string> waits = new System.Collections.Generic.List<string>();
 
@@ -305,8 +345,8 @@ namespace WarmStart
             // (warm: everything that is switched on had something kept to hand over. Cold: nothing had.)
             bool on = Warm.On && !others;
             bool some = handed || Textures.Kept > 0 || Definitions.Gave;
-            bool all = on && (handed || !Warm.Expansions || !Bundles.Any) && (Textures.Kept > 0 || !Warm.Pictures) && (Definitions.Gave || !Warm.Small) && some;
-            Warm.Log("the main menu after " + took + " s" + (all ? ", with everything that is kept handed over" : some ? ", with some of what is kept handed over" : ", with nothing handed over") + (hurried > 0 ? "; the loader was kept from waiting on a fade in " + hurried + " frames" : "") + "; " + frames + " frames were drawn while it loaded" + (lifted ? " (the limit of " + limitWas + " a second lifted)" : ""));
+            bool all = on && (handed || !expansions || !Bundles.Any) && (Textures.Kept > 0 || !Warm.Pictures) && (Definitions.Gave || !Warm.Small) && some;
+            Warm.Log("the main menu after " + took + " s" + (others ? (handed ? ", KSP Community Fixes loading the game and the expansions' files handed over" : ", KSP Community Fixes loading the game") : all ? ", with everything that is kept handed over" : some ? ", with some of what is kept handed over" : ", with nothing handed over") + (hurried > 0 ? "; the loader was kept from waiting on a fade in " + hurried + " frames" : "") + "; " + frames + " frames were drawn while it loaded" + (lifted ? " (the limit of " + limitWas + " a second lifted)" : ""));
             if (lifted) { Application.targetFrameRate = limitWas; lifted = false; }
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= Scene;
             if (waits.Count > 0) Warm.Log("waits of more than 0.3 s between frames while the game started (when, how long): " + string.Join("; ", waits.ToArray()));
@@ -325,7 +365,7 @@ namespace WarmStart
                 try { Cubes.Keep(); }
                 catch (Exception ex) { Warm.Log("could not keep the parts' drag cubes (" + ex.Message + ")"); }
             }
-            if (Warm.On && Warm.Expansions && !others) StartCoroutine(Bundles.Make(text => making = text));
+            if (Warm.On && expansions) StartCoroutine(Bundles.Make(text => making = text));
         }
 
         void Panel()
@@ -333,8 +373,9 @@ namespace WarmStart
             string cold = Warm.Page.Kept("cold"), took = Warm.Page.Kept("took");
             if (others)
             {
-                GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves that to it, and keeps only the parts' drag cubes across changes to the mods, which it does not do."
-                                + (menuAt >= 0f ? " This start took " + menuAt.ToString("F1") + " seconds to the main menu." : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : ""), Host.Small);
+                GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves that to it, and keeps only what it does not do: the parts' drag cubes across changes to the mods" + (Warm.Expansions ? ", and the expansions' files unpacked." : ".")
+                                + (menuAt >= 0f ? " This start took " + menuAt.ToString("F1") + " seconds to the main menu." : "") + (Bundles.Report.Length > 0 ? "\n" + Bundles.Report : "") + (making.Length > 0 ? "\n" + making : "")
+                                + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : ""), Host.Small);
                 return;
             }
             said = (menuAt >= 0f ? "This start took " + menuAt.ToString("F1") + " seconds to the main menu" + (warm ? "." : partly ? ", with some of what can be kept not kept yet." : ", with nothing kept to hand over.") : "Still starting.")

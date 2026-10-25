@@ -54,6 +54,9 @@ namespace WarmStart
         /// <summary>Whether there are any expansions' files here at all.</summary>
         public static bool Any { get; private set; }
 
+        /// <summary>Whether any copy has been put on the game's list at this start (whatever happened after it).</summary>
+        public static bool HandedAny { get; private set; }
+
         static string Index => Warm.Folder + "bundles.cfg";
         static string Root => KSPUtil.ApplicationRootPath;
 
@@ -184,6 +187,7 @@ namespace WarmStart
                 // (the folder as the game's own loader names it, for whatever reads it afterwards)
                 string folder = KSPUtil.ApplicationFileProtocol + Path.GetDirectoryName(original).Replace('\\', '/') + "/";
                 BundleLoader.loadedBundles.Add(name, new BundleLoader.ABInfo(bundle, folder + name, Bytes(k.Sum)));
+                HandedAny = true;
                 handed++; bytes += k.Size;
             }
             if (redated > 0)
