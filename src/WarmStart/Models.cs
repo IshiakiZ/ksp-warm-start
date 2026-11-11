@@ -23,7 +23,8 @@ namespace WarmStart
     /// </summary>
     static class Models
     {
-        /// <summary>How long a frame's slice of reading may take (seconds): the loading screen still moves, a few frames in all.</summary>
+        /// <summary>How long a frame's slice of reading may take (seconds): the loading screen still moves, a few frames in all.
+        /// (As installed: the page's fine detail may set another.)</summary>
         const double Slice = 0.16;
 
         static MethodInfo read;                 // the game's own reader: PartReader.Read(UrlDir.UrlFile), internal to the game
@@ -94,7 +95,7 @@ namespace WarmStart
                 at = 0; stage = 1;
             }
             long began = Stopwatch.GetTimestamp();
-            long until = began + (long)(Slice * Stopwatch.Frequency);
+            long until = began + (long)((Warm.SliceMs != null ? Warm.SliceMs.Value / 1000.0 : Slice) * Stopwatch.Frequency);
             var none = new object[1];
             for (; at < files.Count && Stopwatch.GetTimestamp() < until; at++)
             {

@@ -5,7 +5,7 @@ using UnityEngine;
 
 #if !DEV
 [assembly: KSPAssembly("WarmStart", 0, 1)]
-[assembly: KSPAssemblyDependency("Keystone", 0, 4)]
+[assembly: KSPAssemblyDependency("Keystone", 0, 11)]
 #endif
 
 namespace WarmStart
@@ -45,10 +45,20 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.6.0";
+        public const string Version = "0.7.0";
 
         public static Mod Page;
         public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables, Icons, Models, Words;
+        // (the page's fine details, in its Advanced view: each as installed does what the mod did before it had them; read as the
+        // game loads, so a change takes from the next start)
+        public static Slider SliceMs, AheadMb;
+        public static float Of(Slider slider, float installed) => slider != null ? (float)slider : installed;
+
+        /// <summary>The settings added after Fine(true) are fine details: on the page only in Keystone's Advanced view, until Fine(false).
+        /// (Keystone 0.11.0 has the two views; an older one has neither call, and shows the fine details with the rest.)</summary>
+        static void Fine(bool fine) { try { if (fine) Advanced(Page); else Simple(Page); } catch (Exception) { } }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] static void Advanced(Mod page) => page.Advanced();
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)] static void Simple(Mod page) => page.Simple();
 
         /// <summary>
         /// Where the game keeps the date of a file on its list. The game passes over a file whose texture it has
@@ -75,8 +85,14 @@ namespace WarmStart
             Fades = Page.Toggle("fades", "Do not wait on the loading screen", true, "While one loading picture fades into the next, the game's loader does one file and then waits for the next frame to be drawn, so that the fade is smooth: for a second or two in every several it loads at the speed the screen is drawn at. With this it goes on loading at full speed, and the fades are jerky instead.");
             Frames = Page.Toggle("frames", "Load at any frame rate", true, "Some of the game's loading waits for a frame to be drawn between one file and the next (every PNG picture does). The game holds its frame rate to the limit in its settings while it loads, so those files come in no faster than that. With this the limit is lifted until the main menu is there, and put back.");
             Models = Page.Toggle("models", "Models without a frame between them", true, "The game reads its models one a frame: it waits for the next frame to be drawn after every one, though reading most takes a thousandth of a second or two. With six hundred models that is about three seconds of the start spent drawing the loading screen. With this the models are read one after another by the game's own reader, in a few slices, and the game passes over each as it comes to it.");
+            Fine(true);
+            SliceMs = Page.Slider("slice", "Models read in a frame for", 160f, 20f, 1000f, " ms", 0, "How long the game reads models in one frame before it lets the loading screen draw again: longer, a little faster and a loading screen that moves in jumps. From the next start.");
+            Fine(false);
             Page.Heading("What is kept");
             Pictures = Page.Toggle("pictures", "Textures, ready made", true, "What the game makes of each PNG picture (unpacking it, squeezing it into the graphics card's own format, making its smaller copies) is kept from the first start, and handed back at every later one; and the DDS pictures, which are finished already, are read by several threads ahead of the game. A few hundred megabytes of disk. A picture whose file changes is made again.");
+            Fine(true);
+            AheadMb = Page.Slider("ahead", "Textures read ahead", 128f, 32f, 512f, " MB", 0, "How much of the textures' files is read ahead of the game taking them: more, fewer waits on the disk and more memory held while the game loads. From the next start.");
+            Fine(false);
             Small = Page.Toggle("small", "What is in the small bundles, kept", true, "The game opens every one of its couple of hundred small bundles (the pages of its manual, mostly) at every start, only to read a short description of what is in each: and opening one means unpacking all of it. With this the descriptions are kept from one start to the next, and while no bundle has changed none is opened. Next to no disk.");
             Expansions = Page.Toggle("expansions", "The expansions' files, unpacked", true, "Making History and Breaking Ground keep their models and scenes in three files that the game has to unpack whole, into memory, at every start: about a third of the whole wait. With this, a copy of each is kept that needs no unpacking, and the game is handed that. It takes about a gigabyte of disk, is made once (in the background, at the main menu, the first time), and is made again by itself if the expansion's own file ever changes. Beside KSP Community Fixes (with the Harmony mod, which it needs as well) its own loading of these files, from the packed ones, is held back while the copies are handed over.");
             DragCubes = Page.Toggle("cubes", "The parts' drag cubes, kept", true, "ModuleManager throws the game's record of every part's drag cubes away whenever a mod is added, updated or taken out, and the start that follows makes them all again: half a minute for a thousand parts. With this on, the cubes of every part that is exactly what it was (its description after every patch, its models, the libraries its modules come from) are handed back to the game, and only the parts that changed are made again. A few are left to the game each time and compared with what was kept: if one ever differs, everything kept is thrown away.");

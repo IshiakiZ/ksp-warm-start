@@ -44,7 +44,9 @@ it is fast.
   over. On Windows, with both installed, the main menu after 18.1 to 18.4 s instead of 26.3 to 27.1 (Warm Start alone:
   17.4 to 17.7).
 * Its page in the Keystone window (the keystone button on the game's toolbar, or Alt-K; Option-K on a Mac) has a
-  switch for each part, and says how long the start took and which mods the seconds went to.
+  switch for each part, and says how long the start took and which mods the seconds went to. With Keystone 0.11.0, two
+  finer details in its Advanced view: how long a frame's reading of models may take, and how much of the textures is read
+  ahead. [All of them](https://github.com/IshiakiZ/ksp-warm-start/wiki/The-long-description).
 
 ## Works on
 

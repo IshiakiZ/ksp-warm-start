@@ -168,6 +168,7 @@ namespace WarmStart
         // gigabyte of rubbish for the game to carry for the rest of its run), and no more is read ahead of the handing over
         // than MostHeld: except the one the handing over is waiting for, which is always let through.
         const long MostHeld = 128L << 20;
+        static long mostHeld = MostHeld;                 // (as the page's fine detail has it when the reading begins)
         static readonly object gate = new object();
         static readonly Dictionary<int, Stack<byte[]>> pool = new Dictionary<int, Stack<byte[]>>();
         static long held;
@@ -181,7 +182,7 @@ namespace WarmStart
             while (room < size) room <<= 1;
             lock (gate)
             {
-                while (held > 0 && held + room > MostHeld && index > serving && !stop) Monitor.Wait(gate);
+                while (held > 0 && held + room > mostHeld && index > serving && !stop) Monitor.Wait(gate);
                 held += room;
                 if (pool.TryGetValue(room, out Stack<byte[]> some) && some.Count > 0) return some.Pop();
             }
@@ -367,6 +368,7 @@ namespace WarmStart
 
             // ---- the reading ahead
             next = -1; serving = 0; held = 0; stop = false;
+            mostHeld = Warm.AheadMb != null ? (long)Warm.AheadMb.Value << 20 : MostHeld;
             int threads = Mathf.Clamp(SystemInfo.processorCount - 1, 2, 8);
             // (set by hand in the mod's settings file, "readers = 1" and up: for a disk that is the slower for being read in several places at once)
             if (int.TryParse(Warm.Page.Kept("readers"), out int asked) && asked >= 1 && asked <= 16) threads = asked;

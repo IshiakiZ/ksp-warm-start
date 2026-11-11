@@ -9,7 +9,7 @@ And (from 0.5.0) the game's models are read one after another, where the game wa
 after each: the main menu about a second sooner.
 
 INSTALL
-  This mod needs Keystone, the base it stands on, which is a separate download:
+  This mod needs Keystone 0.11 or later, the base it stands on, which is a separate download:
     https://spacedock.info/mod/4665/Keystone
   Copy Keystone's folder (Keystone) into your KSP's GameData folder, and the WarmStart
   folder from this download beside it, and start the game. Without Keystone the game does
