@@ -7,7 +7,7 @@ using System.Text;
 using HarmonyLib;
 using UnityEngine;
 
-namespace WarmStartHarmony
+namespace WarmStartCompanion
 {
     /// <summary>
     /// (Only in a build of this library made with WSPROBE, never in the one that is installed: for items 9.2 and 9.3, a save's

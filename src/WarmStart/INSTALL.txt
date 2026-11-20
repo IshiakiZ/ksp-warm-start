@@ -15,6 +15,9 @@ INSTALL
   folder from this download beside it, and start the game. Without Keystone the game does
   not load this mod. One copy of Keystone serves every mod that uses it. To remove this
   mod, delete the WarmStart folder.
+  Updating by hand over an older Warm Start: delete WarmStartHarmony.dll from GameData/WarmStart
+  if it is there. The companion for Harmony is WarmStartCompanion.dll now, and takes its place;
+  the mod's page says so while the old file is there.
 
 THE FIRST START
   The first start is as slow as ever, and at its main menu some twenty seconds of work go on in the

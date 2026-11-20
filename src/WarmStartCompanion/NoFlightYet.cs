@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 #endif
 
-namespace WarmStartHarmony
+namespace WarmStartCompanion
 {
     /// <summary>
     /// (Since 0.5.0, with the look-ups by table.) The game asking for its flight's globals while it loads, where there are none:

@@ -30,8 +30,8 @@ namespace WarmStart
     ///
     /// (From 0.3.0 there are two more: the parts' drag cubes kept across the times ModuleManager throws the game's
     /// record of them away (Cubes), and, where the Harmony mod is installed, the game's look-ups done by a table
-    /// (the companion library, src/WarmStartHarmony: the one part that changes the game's code). From 0.4.0 the companion
-    /// also makes the parts' icons without waking the copies it throws away (src/WarmStartHarmony/Icons.cs).)
+    /// (the companion library, src/WarmStartCompanion: the one part that changes the game's code). From 0.4.0 the companion
+    /// also makes the parts' icons without waking the copies it throws away (src/WarmStartCompanion/Icons.cs).)
     ///
     /// None of the game's code is changed here. Each of them hands the game something through a door the game
     /// already has: a list it looks at before it loads a thing, a field it reads, a line it writes in its
@@ -45,7 +45,7 @@ namespace WarmStart
     /// </summary>
     static class Warm
     {
-        public const string Version = "0.7.0";
+        public const string Version = "0.7.1";
 
         public static Mod Page;
         public static Toggle On, Expansions, Fades, Frames, Pictures, Small, DragCubes, Tables, Icons, Models, Words;
@@ -136,13 +136,16 @@ namespace WarmStart
     }
 
     /// <summary>
-    /// What Warm Start's companion library asks of it and gives it. (WarmStartHarmony: the look-ups by table and the icons made
+    /// What Warm Start's companion library asks of it and gives it. (WarmStartCompanion: the look-ups by table and the icons made
     /// without waking. The game loads that library only where the Harmony mod is installed; this one never needs Harmony.)
     /// </summary>
     public static class Companion
     {
         /// <summary>What the companion has to say for the mod's page, once it has put its look-ups in.</summary>
         public static Func<string> TablesReport;
+
+        /// <summary>The file name of an old copy of the companion left in the mod's folder beside the new one (it was WarmStartHarmony.dll until 2026-11-20), for the mod's page; null where there is none.</summary>
+        public static string OldCopy;
 
         /// <summary>Whether the look-ups by table are wanted: the mod on, their switch on, and no other mod loading the game its own way.</summary>
         public static bool WantsTables
@@ -173,15 +176,15 @@ namespace WarmStart
 
         /// <summary>
         /// KSP Community Fixes' own loading of the expansions' files held back wherever Warm Start hands over its copies, by the
-        /// companion (WarmStartHarmony.Aside: that takes Harmony, which this library never needs, and which KSP Community Fixes
+        /// companion (WarmStartCompanion.Aside: that takes Harmony, which this library never needs, and which KSP Community Fixes
         /// needs as well). True once that is in place; why not, where it is not.
         /// </summary>
         internal static bool HoldPreload(out string said)
         {
             foreach (AssemblyLoader.LoadedAssembly a in AssemblyLoader.loadedAssemblies)
             {
-                if (a == null || a.name != "WarmStartHarmony") continue;
-                System.Reflection.MethodInfo m = a.assembly.GetType("WarmStartHarmony.Aside", false)?.GetMethod("Preload", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                if (a == null || a.name != "WarmStartCompanion") continue;
+                System.Reflection.MethodInfo m = a.assembly.GetType("WarmStartCompanion.Aside", false)?.GetMethod("Preload", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
                 if (m == null) { said = "Warm Start's companion here is older than Warm Start"; return false; }
                 object[] args = { null };
                 try
@@ -238,7 +241,7 @@ namespace WarmStart
             // them, from the packed files at every start, which the main menu waits on, is held back for it by the companion. Not
             // where that cannot be done: the copies would then be loaded twice over. (Handed over beside it on 2026-10-18 with that
             // loading of its in place, they were no faster, 11.3 seconds against 12.0. Held back, on the PC 2026-10-24, the main
-            // menu after 18.4 s against 26.3 to 26.7: WarmStartHarmony/Aside.cs.)
+            // menu after 18.4 s against 26.3 to 26.7: WarmStartCompanion/Aside.cs.)
             if (Warm.On && Warm.Expansions)
             {
                 expansions = true;
@@ -387,11 +390,13 @@ namespace WarmStart
         void Panel()
         {
             string cold = Warm.Page.Kept("cold"), took = Warm.Page.Kept("took");
+            // (an old copy of the companion left beside the new one by an update made by hand: see WarmStartCompanion.AtStart)
+            string old = Companion.OldCopy != null ? "\nAn old copy of Warm Start's companion, " + Companion.OldCopy + ", is in GameData/WarmStart beside WarmStartCompanion.dll, which takes its place: please delete " + Companion.OldCopy + "." : "";
             if (others)
             {
                 GUILayout.Label("KSP Community Fixes is installed, and loads the game its own way. Warm Start leaves that to it, and keeps only what it does not do: the parts' drag cubes across changes to the mods" + (Warm.Expansions ? ", and the expansions' files unpacked." : ".")
                                 + (menuAt >= 0f ? " This start took " + menuAt.ToString("F1") + " seconds to the main menu." : "") + (Bundles.Report.Length > 0 ? "\n" + Bundles.Report : "") + (making.Length > 0 ? "\n" + making : "")
-                                + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : ""), Host.Small);
+                                + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "") + old, Host.Small);
                 return;
             }
             said = (menuAt >= 0f ? "This start took " + menuAt.ToString("F1") + " seconds to the main menu" + (warm ? "." : partly ? ", with some of what can be kept not kept yet." : ", with nothing kept to hand over.") : "Still starting.")
@@ -400,7 +405,7 @@ namespace WarmStart
                  + "\n" + Bundles.Report + (Textures.Report.Length > 0 ? "\n" + Textures.Report : "") + (Models.Report.Length > 0 ? "\n" + Models.Report : "") + (Definitions.Report.Length > 0 ? "\n" + Definitions.Report : "") + (Cubes.Report.Length > 0 ? "\n" + Cubes.Report : "") + (Warm.Tables ? "\n" + (Companion.TablesReport != null ? Companion.TablesReport() : "Look-ups by table need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "")
                  + (Warm.Icons ? "\n" + (Companion.IconsReport != null ? Companion.IconsReport() : "Icons made without waking need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "")
                  + (Warm.Words ? "\n" + (Companion.WordsReport != null ? Companion.WordsReport() : "Words looked up once need the Harmony mod (HarmonyKSP), which is not installed" + (Warm.OthersDo ? "" : ", or were switched on since the game started") + ".") : "") + (making.Length > 0 ? "\n" + making : "") + (Where.Report.Length > 0 ? "\n" + Where.Report : "");
-            GUILayout.Label(said, Host.Small);
+            GUILayout.Label(said + old, Host.Small);
         }
 
         static GUIStyle words;

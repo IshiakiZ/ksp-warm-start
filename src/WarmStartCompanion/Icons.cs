@@ -5,7 +5,7 @@ using System.Text;
 using HarmonyLib;
 using UnityEngine;
 
-namespace WarmStartHarmony
+namespace WarmStartCompanion
 {
     /// <summary>
     /// The parts' icons, made without copying and waking what is thrown away. The game makes a part's icon (the little model

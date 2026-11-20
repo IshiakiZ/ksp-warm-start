@@ -5,12 +5,12 @@ using HarmonyLib;
 using UnityEngine;
 
 #if !DEV
-[assembly: KSPAssembly("WarmStartHarmony", 0, 1)]
+[assembly: KSPAssembly("WarmStartCompanion", 0, 1)]
 [assembly: KSPAssemblyDependency("WarmStart", 0, 1)]
 [assembly: KSPAssemblyDependency("HarmonyKSP", 1, 0)]
 #endif
 
-namespace WarmStartHarmony
+namespace WarmStartCompanion
 {
     /// <summary>
     /// Warm Start's companion for the Harmony mod: the game's look-ups done by a table instead of a walk. The game loads
@@ -38,8 +38,36 @@ namespace WarmStartHarmony
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
     public sealed class AtStart : MonoBehaviour
     {
+        // (This library was WarmStartHarmony.dll until 2026-11-20, a name CKAN takes for a copy of Harmony itself: its check
+        // refuses any library with "Harmony" in its name that does not say it provides Harmony. Where a player updated by
+        // hand over an older Warm Start, that file is still there and the game loads both. The old one puts its look-ups in
+        // as the game starts its libraries; this one waits a frame and puts its own in after them, each taking the old one's
+        // out first (the same Harmony ids, and the same places in Warm Start for what it reports), so that this one's are
+        // the ones in play; and it says in the log, and on the mod's page, which file to delete.)
+        internal const string OldName = "WarmStartHarmony";
+        bool waiting;
+
         void Awake()
         {
+            foreach (AssemblyLoader.LoadedAssembly a in AssemblyLoader.loadedAssemblies)
+                if (a != null && a.name == OldName) waiting = true;
+            if (waiting)
+            {
+                WarmStart.Companion.OldCopy = OldName + ".dll";
+                WarmStart.Companion.Log("an old copy of this mod's companion, " + OldName + ".dll, is in GameData/WarmStart beside WarmStartCompanion.dll, which takes its place: please delete " + OldName + ".dll");
+                return;
+            }
+            Begin();
+        }
+
+        void Start()
+        {
+            if (waiting) Begin();
+        }
+
+        void Begin()
+        {
+            waiting = false;
             try { Tables.Begin(); }
             catch (Exception ex) { WarmStart.Companion.Log("the look-ups by table could not be put in (" + ex.Message + "): the game does its own"); }
             try { Icons.Begin(); }

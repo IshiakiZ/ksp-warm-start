@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using HarmonyLib;
 
-namespace WarmStartHarmony
+namespace WarmStartCompanion
 {
     /// <summary>
     /// KSP Community Fixes' own loading of the expansions' files (its patch ExpansionBundlePreload) held back wherever Warm Start

@@ -6,7 +6,7 @@ using System.Threading;
 using HarmonyLib;
 using KSP.Localization;
 
-namespace WarmStartHarmony
+namespace WarmStartCompanion
 {
     /// <summary>
     /// (Since 0.5.0.) The game's words looked up once: what the localiser makes of a tag, kept and given again.
